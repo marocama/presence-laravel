@@ -15,23 +15,32 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['middleware' => ['auth']], function()
 {
-    Route::get('/', 'HomeController@index')->name('home');
+    Route::get ('/', 'HomeController@index')->name('home');
+    Route::get ('/home', 'HomeController@index')->name('home');
+    Route::get ('/profile', 'HomeController@profile')->name('profile');
+    Route::post('/profile', 'HomeController@alterPass')->name('profile.alterPass');
 
-    Route::get('/presence', 'PresenceController@index')->name('presence');
-    Route::get('/setPresence', 'setPresenceController@index')->name('setPresence');
-    Route::post('/setPresence', 'setPresenceController@confirm')->name('setPresence.confirm');
+    Route::get ('/presence', 'PresenceController@index')->name('presence');
+    Route::post('/presence', 'PresenceController@list')->name('presence.list');
 
-    Route::get('/setCheckout', 'setCheckoutController@index')->name('setCheckout');
-    Route::post('/setCheckout', 'setCheckoutController@confirm')->name('setCheckout.confirm');
+    Route::post('/presence/register', 'PresenceController@write')->name('presence.register');
+    
+    Route::get ('/view/{id}', 'CityController@index')->name('city');
 
-    Route::get('/events', 'EventsController@index')->name('events');
-    Route::post('/events', 'EventsController@add')->name('events.add');
-    Route::get('/showEvents', 'EventsController@data')->name('showEvents');
+    Route::post('/view/upload/1', 'CityController@fileUploadInicio')->name('upload.inicio');
+    Route::post('/view/upload/2', 'CityController@fileUploadFormalizacao')->name('upload.formaliza');
+    Route::post('/view/upload/3', 'CityController@fileUpload1Apresentacao')->name('upload.1apresentacao');
+    Route::post('/view/upload/4', 'CityController@fileUploadProduto1')->name('upload.produto1');
 
-    Route::get('/setPass', 'setPassController@index')->name('setPass');
-    Route::post('/setPass', 'setPassController@alterPass')->name('setPass.alterPass');
+    Route::get ('/records', 'AdminController@index')->name('records');
+    Route::get ('/alerts', 'AdminController@alerts')->name('alerts');
+    Route::post('/alerts', 'AdminController@alertsReg')->name('alerts.reg');
+    Route::get ('/new', 'AdminController@new')->name('new');
+    Route::post('/new', 'AdminController@register')->name('new.conf');
 });
 
 Auth::routes();
 
-Route::get('/home', 'HomeController@index')->name('home');
+Auth::routes(['verify' => true]);
+
+Route::get ('/', 'PublicController@index')->name('inicio');

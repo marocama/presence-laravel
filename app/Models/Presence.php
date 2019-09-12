@@ -7,164 +7,134 @@ use App\User;
 
 class Presence extends Model
 {
-    public $timestamps = false;
-    protected $fillable = ['user_id', 'date', 'check_in', 'check_out', 'loc_x', 'loc_y', 'loc_c', 'loc_x_o', 'loc_y_o', 'loc_c_o', 'status', 'conf_i', 'conf_o'];
+    protected $fillable = [
+        'user_id', 'checkIn', 'checkOut', 'status', 'localE', 'localS', 'created_at', 'updated_at'
+    ];
 
-    /*******************************************************
-    ********************************************************
-    * Método para registro de entrada na tabela de presenças
-    ********************************************************
-    *******************************************************/
-    public function register($locx, $locy, $locc, $states) : Array
+    // ******************************************
+    // ** Recebe a Tag RFID e registra a presença
+    public function register($user_uid) 
     {
-        $checks = Presence::with(['user'])->where('date', '=', date("Y-m-d"))->get();
+        $user = User::where('uid', $user_uid)->first();
 
-        $cont_presentes = Presence::where([['date', '=', date("Y-m-d")], ['loc_c', '=', 'USF'], ['check_out', '=', NULL]])->count();
-
-        $cont_i = (isset($states)) ? count($states) : 0;
-        
-        $cont_acertos = 0; $cont_erros = 0; $confiabilidade = 100;
-
-        foreach($checks as $check)
-        {
-            if($check->user_id === auth()->user()->id)
-                return [
-                    'success' => false,
-                    'message' => 'Você já registrou sua entrada hoje'
-                ];
-        }
-
-        if($locc == "USF")
-        {   
-            if(isset($states))
-            {
-                foreach($states as $state)
-                {
-                    foreach($checks as $check) 
-                    {
-                        if($state == $check->user->name && $check->check_out == NULL && $check->loc_c == "USF")
-                        {
-                            $cont_acertos++;
-                            break;
-                        }  
-                    }
-                }
-            }
-
-            $cont_erros = $cont_i - $cont_acertos;
-
-            $confiabilidade -= $cont_erros * 30;
-            $confiabilidade -= ($cont_presentes - $cont_acertos) * 5;
-        }
-
-        if ($locx == null || $locy == null || $locc == null) 
+        if(!$user)
             return [
-                'success' => false,
-                'message' => 'Preencha todos os campos'
+                'success' => false
             ];
 
-        $presence = auth()->user()->presences()->create([
-            'user_id'   => auth()->user()->id,
-            'date'      => date('Y-m-d'),
-            'check_in'  => date('H:i'),
-            'loc_x'     => $locx,
-            'loc_y'     => $locy,
-            'loc_c'     => $locc,
-            'status'    => 1,
-            'conf_i'    => $confiabilidade
-        ]);
+        $record = Presence::where('user_id', $user->id)->whereDate('created_at', date('Y-m-d'))->latest()->first();
+        
+        if($record)
+        {
+            if($record->checkOut == NULL) 
+            {
+                $record->checkOut = date('Y-m-d H:i:s');
+                $record->updated_at = date('Y-m-d H:i:s');
+                $record->status = true;
+                $record->localS = "RFID";
+                $record->save();
 
-        if ($presence) 
+                return [
+                    'success' => true
+                ];
+            }
+                
             return [
-                'success' => true,
-                'message' => 'Registro de Entrada efetuado com sucesso!'
+                'success' => false
+            ];
+        }
+
+        $new = new Presence;
+
+        $new->user_id = $user->id;
+        $new->created_at = date('Y-m-d H:i:s');
+        $new->updated_at = date('Y-m-d H:i:s');
+        $new->checkIn = date('Y-m-d H:i:s');
+        $new->status = false;
+        $record->localE = "RFID";
+        $new->save();
+
+        if($new)
+            return [
+                'success' => true
             ];
 
         return [
-            'success' => false,
-            'message' => 'Falha no registro, tente novamente'
+            'success' => false
+        ];
+    } 
+
+    // ***********************************************
+    // ** Recebe o local atual para registrar presença
+    public function registerPlatform($local)
+    {
+        $presence = auth()->user()->presences()->whereDate('created_at', date('Y-m-d'))->latest()->first();
+        
+        if($presence)
+        {
+            if($presence->checkOut == NULL) 
+            {
+                $presence->checkOut = date('Y-m-d H:i:s');
+                $presence->updated_at = date('Y-m-d H:i:s');
+                $presence->localS = $local;
+                $presence->status = true;
+                $presence->save();
+
+                return [
+                    'success' => true
+                ];
+            }
+            
+            return [
+                'success' => false
+            ];
+        }
+
+        $record = new Presence;
+
+        $record->user_id = auth()->user()->id;
+        $record->created_at = date('Y-m-d H:i:s');
+        $record->updated_at = date('Y-m-d H:i:s');
+        $record->checkIn = date('Y-m-d H:i:s');
+        $record->localE = $local;
+        $record->status = false;
+
+        $record->save();
+
+        if($record)
+            return [
+                'success' => true
+            ];
+
+        return [
+            'success' => false
         ];
     }
 
-    /*****************************************************
-    ******************************************************
-    * Método para registro de saída na tabela de presenças
-    ******************************************************
-    *****************************************************/
-    public function exit($locx, $locy, $locc, $states) : Array
-    {
-        $checks = Presence::with(['user'])->where('date', '=', date("Y-m-d"))->get();
+    // *****************************************************
+    // ** Recebe um POST para registrar presença manualmente
+    public function manual($user_id, $data, $checkIn, $checkOut)
+    {   
+        $inData = $data.' '.$checkIn;
+        $outData = $data.' '.$checkOut;
 
-        $cont_presentes = Presence::where([['date', '=', date("Y-m-d")], ['loc_c', '=', 'USF'], ['check_out', '=', NULL]])->count();
-        $cont_presentes--;
+        $record = new Presence;
+        $record->user_id = $user_id;
+        $record->created_at = date('Y-m-d H:i:s');
+        $record->updated_at = date('Y-m-d H:i:s');
+        $record->checkIn = date_format(date_create_from_format('d/m/Y H:i', $inData), 'Y-m-d H:i:s');
+        $record->checkOut = date_format(date_create_from_format('d/m/Y H:i', $outData), 'Y-m-d H:i:s');
+        $record->status = true;
 
-        $cont_i = (isset($states)) ? count($states) : 0;
-        
-        $cont_acertos = 0; $cont_erros = 0; $confiabilidade = 100; $flag_check_in = 0;
+        $record->save();
 
-        foreach($checks as $check)
-        {
-            if($check->user_id == auth()->user()->id && $check->check_out == NULL)
-            {
-                $flag_check_in = 1;
-            }
-        }
-
-        if($flag_check_in == 0)
+        if($record)
             return [
-                'success' => false,
-                'message' => 'Você ainda não registrou sua entrada ou já registrou sua saída hoje'
-            ];
-
-        if($locc == "USF")
-        {   
-            if(isset($states))
-            {
-                foreach($states as $state)
-                {
-                    foreach($checks as $check) 
-                    {
-                        if($state == $check->user->name && $check->check_out == NULL && $check->loc_c == "USF")
-                        {
-                            $cont_acertos++;
-                            break;
-                        }  
-                    }
-                }
-            }
-
-            $cont_erros = $cont_i - $cont_acertos;
-
-            $confiabilidade -= $cont_erros * 30;
-            $confiabilidade -= ($cont_presentes - $cont_acertos) * 5;
-        }
-
-        if ($locx == null || $locy == null || $locc == null) 
-            return [
-                'success' => false,
-                'message' => 'Preencha todos os campos'
-            ];
-
-        $presence = auth()->user()->presences()->where('date', '=', date("Y-m-d"))->update(
-            array(
-                'check_out' => date('H:i'),
-                'loc_x_o'   => $locx,
-                'loc_y_o'   => $locy,
-                'loc_c_o'   => $locc,
-                'status'    => 2,
-                'conf_o'    => $confiabilidade,
-            )
-        );
-
-        if ($presence) 
-            return [
-                'success' => true,
-                'message' => 'Registro de Saída efetuado com sucesso!'
+                'success' => true
             ];
 
         return [
-            'success' => false,
-            'message' => 'Falha no registro, tente novamente'
+            'success' => false
         ];
     }
 

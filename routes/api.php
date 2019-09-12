@@ -16,3 +16,7 @@ use Illuminate\Http\Request;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::middleware('throttle:20,1')->group(function () {
+    Route::post('/write', 'PresenceController@rfid')->name('write');
+});

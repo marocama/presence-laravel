@@ -24,7 +24,7 @@ class UserValidationFormRequest extends FormRequest
     public function rules()
     {
         return [
-            'passwordNov' =>'required|string',
+            'passwordNov' =>'required|string|min:8',
             'passwordCon' =>'required|string',
         ];
     }

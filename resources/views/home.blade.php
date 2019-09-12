@@ -1,63 +1,61 @@
 @extends('adminlte::page')
 
 @section('content_header')
-    <h1>Home</h1>
+    <h1>Home - PMMU</h1>
 @stop
 
 @section('content')
     <p>Bem-vindo(a), <b>{{ $name }}</b>!</p><br>
     @include('includes.alerts')
-    <div class="row">
-        <div class="col-md-12 col-sm-6 col-xs-12">
-            <div class="info-box">
-                <span class="info-box-icon bg-green"><i class="ion ion-ios-calendar"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">Próximo Evento</span>
-                    <span class="info-box-number">
-                        {{ ($events != null) ? $events['name'] : 'Não há eventos cadastrados' }}
-                    </span>
-                    <span class="info-box-number">
-                        {{ ($events != null) ? date_format(date_create($events['date']), 'd/m/Y') : '--/--/----' }}
-                        <small> às {{ ($events != null) ? date_format(date_create($events['time']), 'H:i') : '--:--' }}</small>
-                    </span>
-                </div>
-            </div>
+    @forelse ($alerts as $alert)
+        @if(strtotime($alert->endShow) > strtotime('now') && $alert->can == auth()->user()->can)
+        <div class="callout callout-{{$alert->type}}">
+            <h4><font style="vertical-align: inherit;"><i class="icon fa fa-{{$alert->icon}} fa-fw"></i> {{$alert->title}}</font></h4>
+            <p><font style="vertical-align: inherit;">{{$alert->message}}</font></p>
         </div>
-    <div class="clearfix visible-sm-block"></div>
-    </div>
-    <?php $cont = 0; ?>
-    @forelse($presences as $presence)
-        @if (date("m") == date_format(date_create($presence->date), 'm'))
-            <?php $cont++ ?>
         @endif
     @empty
     @endforelse
+    @if($pmmu)
     <div class="row">
-        <div class="col-md-6 col-sm-6 col-xs-12">
-            <div class="info-box bg-yellow">
-                <span class="info-box-icon"><i class="fa fa-calendar-times-o"></i></span>
+        <div class="col-md-12 col-xs-12">
+            <div class="info-box bg-purple">
+                <span class="info-box-icon"><i class="fa fa-file"></i></span>
                 <div class="info-box-content">
-                    <span class="info-box-text">Presença - Este Mês</span>
-                    <span class="info-box-number"> {{ $cont }}</span>
+                    <span class="info-box-text">PMMU - {{$pmmu->name}}</span>
+                    <span class="info-box-number">{{$percent}}% Concluído</span>
                     <div class="progress">
-                        <div class="progress-bar" style="width: 100%"></div>
+                        <div class="progress-bar" style="width: {{$percent}}%"></div>
                     </div>
-                    <span class="progress-description text-center"><a href="{{ route('presence') }}" class="text-gray">Mais informações <i class="fa fa-arrow-circle-right"></i>
-            </a></span>
+                    <span class="progress-description text-center"><strong>Prazo Final:</strong> {{date('d M. Y', strtotime($pmmu->timesEnd))}} </span>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 col-sm-6 col-xs-12">
-            <div class="info-box bg-red">
-                <span class="info-box-icon"><i class="fa fa-reorder"></i></span>
-
+    </div> 
+    @endif
+    <div class="row">
+        <div class="col-md-12 col-xs-12">
+            <div class="info-box bg-navy">
+                <span class="info-box-icon"><i class="fa fa-calendar-times-o"></i></span>
                 <div class="info-box-content">
-                    <span class="info-box-text">Presença - Total</span>
-                    <span class="info-box-number"> {{ count($presences) }}</span>
+                    <span class="info-box-text">Presença</span>
+                    @if($presence != NULL)
+                        @if(date('d/m/Y', strtotime($presence->checkIn)) == date('d/m/Y', strtotime('now')))
+                            @if($presence->checkOut)
+                                <span class="info-box-number">Validação completa!</span>
+                            @else
+                                <span class="info-box-number">Check-in realizado!</span>
+                            @endif
+                        @else
+                            <span class="info-box-number">Nenhum registro hoje!</span>
+                        @endif
+                    @else
+                        <span class="info-box-number">Nenhum registro hoje!</span>
+                    @endif
                     <div class="progress">
-                        <div class="progress-bar" style="width: 100%"></div>
+                        <div class="progress-bar" style="width: 0%"></div>
                     </div>
-                    <span class="progress-description text-center"><a href="{{ route('presence') }}" class="text-gray">Mais informações <i class="fa fa-arrow-circle-right"></i>
+                    <span class="progress-description text-center"><a href="{{ route('presence') }}" class="text-gray">Mais informações <i class="fa fa-fw fa-arrow-circle-right"></i>
             </a></span>
                 </div>
             </div>

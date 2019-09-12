@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'title' => 'uQuest - PMMU',
+    'title' => 'PMMU',
 
     'title_prefix' => '',
 
@@ -30,9 +30,9 @@ return [
     |
     */
 
-    'logo' => '<b>PMMU</b> - uQuest',
+    'logo' => '<b><i class="fa fa-fw  fa-arrows"></i> PMMU</b>',
 
-    'logo_mini' => '',
+    'logo_mini' => '<i class="fa fa-fw  fa-arrows"></i>',
 
     /*
     |--------------------------------------------------------------------------
@@ -113,49 +113,45 @@ return [
             'text'        => 'Home',
             'url'         => 'home',
             'icon'        => 'home',
-           // 'label'       => 4,
-           // 'label_color' => 'success',
         ],
         [
             'text' => 'Presença',
             'url'  => 'presence',
-            'icon' => 'check',
-        ],
-        [
-            'text' => 'Eventos',
             'icon' => 'calendar',
-            'submenu' => [
-                [
-                    'text' => 'Cadastrar',
-                    'url'  => 'events',
-                ],
-                [
-                    'text' => 'Visualizar',
-                    'url'  => 'showEvents',
-                ],
-            ],
         ],
         [
             'text'    => 'PMMU',
             'icon'    => 'file',
             'submenu' => [
                 [
-                    'text' => 'Monteiro Lobato',
-                    'url'  => '#',
+                    'text' => 'Tuiuti',
+                    'url'  => '/view/1',
                 ],
             ],
         ],
         'MINHA CONTA',
         [
-            'text' => 'Alterar Senha',
-            'url'  => 'setPass',
-            'icon' => 'lock',
+            'text' => 'Perfil',
+            'url'  => 'profile',
+            'icon' => 'user',
         ],
         [
-            'text' => 'Relátórios',
+            'text' => 'Relatórios',
             'url'  => 'records',
-            'icon' => 'chart-bar',
-            'can'  => 'manager/lock',
+            'icon' => 'bar-chart',
+            'can'  => 'manager',
+        ],
+        [
+            'text' => 'Alertas',
+            'url'  => 'alerts',
+            'icon' => 'warning',
+            'can'  => 'manager',
+        ],
+        [
+            'text' => 'Lançar Presença',
+            'url'  => 'new',
+            'icon' => 'cog',
+            'can'  => 'master',
         ],
     ],
 
